@@ -1,7 +1,7 @@
 const { readFileSync } = require('fs');
 
 function gerarFaturaStr(fatura, pecas) {
-    // função extraída
+    // Função extraída
     function formatarMoeda(valor) {
         return new Intl.NumberFormat("pt-BR", {
             style: "currency",
@@ -10,7 +10,7 @@ function gerarFaturaStr(fatura, pecas) {
         }).format(valor / 100);
     }
 
-    // função extraída
+    // Função extraída
     function calcularCredito(apre) {
         let creditos = 0;
         creditos += Math.max(apre.audiencia - 30, 0);
@@ -19,12 +19,12 @@ function gerarFaturaStr(fatura, pecas) {
         return creditos;
     }
 
-    // função query
+    // Função query
     function getPeca(apresentacao) {
         return pecas[apresentacao.id];
     }
 
-    // função extraída
+    // Função extraída
     function calcularTotalApresentacao(apre) {
         let total = 0;
         switch (getPeca(apre).tipo) {
@@ -47,23 +47,31 @@ function gerarFaturaStr(fatura, pecas) {
         return total;
     }
 
-    let totalFatura = 0;
-    let creditos = 0; // Inicialize a variável 'creditos'
-    let faturaStr = `Fatura ${fatura.cliente}\n`;
-
-    for (let apre of fatura.apresentacoes) {
-        let total = calcularTotalApresentacao(apre);
-
-        // créditos para próximas contratações
-        creditos += calcularCredito(apre);
-
-        // mais uma linha da fatura
-        faturaStr += `  ${getPeca(apre).nome}: ${formatarMoeda(total)} (${apre.audiencia} assentos)\n`;
-        totalFatura += total;
+    // Nova função extraída para calcular o total da fatura
+    function calcularTotalFatura() {
+        let totalFatura = 0;
+        for (let apre of fatura.apresentacoes) {
+            totalFatura += calcularTotalApresentacao(apre);
+        }
+        return totalFatura;
     }
 
-    faturaStr += `Valor total: ${formatarMoeda(totalFatura)}\n`;
-    faturaStr += `Créditos acumulados: ${creditos} \n`;
+    // Nova função extraída para calcular os créditos totais
+    function calcularTotalCreditos() {
+        let creditos = 0;
+        for (let apre of fatura.apresentacoes) {
+            creditos += calcularCredito(apre);
+        }
+        return creditos;
+    }
+
+    // Corpo principal
+    let faturaStr = `Fatura ${fatura.cliente}\n`;
+    for (let apre of fatura.apresentacoes) {
+        faturaStr += `  ${getPeca(apre).nome}: ${formatarMoeda(calcularTotalApresentacao(apre))} (${apre.audiencia} assentos)\n`;
+    }
+    faturaStr += `Valor total: ${formatarMoeda(calcularTotalFatura())}\n`;
+    faturaStr += `Créditos acumulados: ${calcularTotalCreditos()} \n`;
     return faturaStr;
 }
 
